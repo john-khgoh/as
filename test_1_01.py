@@ -2,9 +2,15 @@ from os import getcwd
 import pandas as pd
 import numpy as np
 import plotly.express as px
+from sklearn.impute import KNNImputer
 
 ##Section 1: Introduction and loading the data
 #Initializing files and directories
+
+#Variations: (1) Model (sklearn, xgboost, keras) (2) NA handling technique (mode, kNN)  (3) No. of k neighbots for kNN imputer (4) Hyperparameter tuning
+
+pd.set_option('display.max_rows',3000)
+
 wd = getcwd()
 x_train_file = wd + '\\offline\\X_train.csv'
 y_train_file = wd + '\\offline\\y_train.csv'
@@ -30,21 +36,30 @@ offline_pininfo_df = pd.read_csv(offline_pininfo_file)
 online_pininfo_df = pd.read_csv(online_pininfo_file)
 
 ##Section 2: Data exploration
-
 #Getting the dataframe dimensions
-print(x_train_df.shape)
-print(x_test_df.shape)
-print(x_pred_df.shape)
+#print(x_train_df.shape)
+#print(x_test_df.shape)
+#print(x_pred_df.shape)
 
 #Description of the data distribution for x_train and x_test
 #print(x_train_df.describe())
-#print(x_train_df.describe())
 #print(x_test_df.describe())
+
+#Adding a column to label the original dataset
+len_x_train_df = len(x_train_df)
+len_x_test_df = len(x_test_df)
+len_x_pred_df = len(x_pred_df)
+
+label_df = pd.DataFrame(['1'] * len_x_train_df + ['2'] * len_x_test_df + ['3'] * len_x_pred_df,columns=['label']) #Labels: 1:Train, 2:Test, 3:Pred
 
 #Combining all the X-values from x_train, x_test and x_pred to visualize the distribution
 x_comb_df = pd.concat([x_train_df,x_test_df,x_pred_df],axis=0)
+x_comb_df = x_comb_df.reset_index(drop=True) #The index of the original dataframes are dropped to merge with the label_df
+x_comb_df = pd.concat([x_comb_df,label_df],axis=1)
+#print(x_comb_df)
+
 comb_pininfo_df = pd.concat([offline_pininfo_df,online_pininfo_df],axis=0)
-#print(comb_pininfo_df)
+#print(x_comb_df)
 
 #Distribution of NAs by column
 col_list = x_comb_df.columns
@@ -68,7 +83,6 @@ fig_y = px.scatter(comb_pininfo_df,x='x',y='y')
 fig_y.show()
 '''
 
-'''
 ##Section 3: NA handling
 #Counting the percentage of NaN for x_train
 x_train_df_na = x_train_df.isna().sum().sum()
@@ -92,4 +106,9 @@ print("%.2f" %x_pred_na_pct)
 #Comment: There's a significant large no. of NaNs in the dataset, especially in x_test_submission
 #Comment: The no. of NaNs by BLE is as shown by the previous pie chart
 #Comment: A data imputation technique is required. It's possible to substitute it with: (1)Zeros (2)Mean (3)Mode (4)k-Nearest Neighbors
-'''
+imputer = KNNImputer(n_neighbors=5,weights='distance')
+imputer.fit(x_comb_df)
+x_comb = imputer.transform(x_comb_df)
+x_comb_df = pd.DataFrame(x_comb,columns=col_list)
+#print(x_comb_df)
+
