@@ -9,6 +9,9 @@ from sklearn.impute import KNNImputer
 #Variations: (1) Model (sklearn, xgboost, keras) (2) NA handling technique (mode, kNN)  (3) No. of k neighbors for kNN imputer (4) Hyperparameter tuning
 
 ##Section 1: Introduction and loading the data
+#Note: Explain hypothesis & assumptions
+#E.g. An assumption is that there's a moderate to strong correlation between the observed signal strengths and the position of the BLE receivers relative to the BLE transmitters.
+#Otherwise, performing ML to predict location of BLE receivers would not yield any meaningful results (explain)
 #Initializing files and directories
 pd.set_option('display.max_rows',3000)
 
@@ -51,16 +54,20 @@ len_x_train_df = len(x_train_df)
 len_x_test_df = len(x_test_df)
 len_x_pred_df = len(x_pred_df)
 
-label_df = pd.DataFrame(['1'] * len_x_train_df + ['2'] * len_x_test_df + ['3'] * len_x_pred_df,columns=['label']) #Labels: 1:Train, 2:Test, 3:Pred
+dataset_label_df = pd.DataFrame(['1'] * len_x_train_df + ['2'] * len_x_test_df + ['3'] * len_x_pred_df,columns=['dataset']) #Labels: 1:Train, 2:Test, 3:Pred
 
 #Combining all the X-values from x_train, x_test and x_pred to visualize the distribution
 x_comb_df = pd.concat([x_train_df,x_test_df,x_pred_df],axis=0)
-x_comb_df = x_comb_df.reset_index(drop=True) #The index of the original dataframes are dropped to merge with the label_df
-x_comb_df = pd.concat([x_comb_df,label_df],axis=1)
+x_comb_df = x_comb_df.reset_index(drop=True) #The index of the original dataframes are dropped to merge with the dataset_label_df
+x_comb_df = pd.concat([x_comb_df,dataset_label_df],axis=1)
 #print(x_comb_df)
 
+onoff_pin_label_df = pd.DataFrame(['Off'] * len(offline_pininfo_df) + ['On'] * len(online_pininfo_df),columns=['status'])
 comb_pininfo_df = pd.concat([offline_pininfo_df,online_pininfo_df],axis=0)
-#print(x_comb_df)
+comb_pininfo_df = comb_pininfo_df.reset_index(drop=True)
+comb_pininfo_df = pd.concat([comb_pininfo_df,onoff_pin_label_df],axis=1)
+#print(comb_pininfo_df)
+
 
 #Distribution of NAs by column
 col_list = x_comb_df.columns
@@ -74,7 +81,7 @@ col_na_df = pd.concat([pd.DataFrame(col_list,columns=['BLE']),pd.DataFrame(col_n
 #df[df.columns[x]].values
 
 #Visualizing the total no. of NAs by BLE
-fix_na = px.pie(col_na_df,values='No. of NaNs',names='BLE',title='Combined No. of NaNs by BLE transmitters')
+fix_na = px.pie(col_na_df,values='No. of NaNs',names='BLE',title='Combined No. of NaNs by BLE receivers')
 fix_na.show()
 
 #Visualizing the data point distributions in a violin-boxplot
@@ -86,12 +93,12 @@ for i,j in enumerate(df_list):
         fig_subplot.append_trace(go.Violin(y=j[l].values,name=str(l),fillcolor='lightblue',line_color='grey'),row=i+1,col=k+1)
         #fig_subplot.append_trace(go.Violin(x=j.columns,y=j[j[l]],name=str(l)),row=i+1,col=1)
 fig_subplot.update_xaxes(tickangle=20)
-fig_subplot.layout.update(showlegend=False,title_text = 'Distribution of BLE transmitters signal strength by dataset')
+fig_subplot.layout.update(showlegend=False,title_text = 'Distribution of BLE Receivers Signal Strength by Dataset')
 fig_subplot.show()
 
 #Visualizing the pin info xy-spatial distribution
 #Comment: It looks quite uniform
-fig_y = px.scatter(comb_pininfo_df,x='x',y='y')
+fig_y = px.scatter(comb_pininfo_df,x='x',y='y',color='status',color_discrete_sequence=['red','green'],title='Pin Info XY-spatial Distribution')
 fig_y.show()
 
 ##Section 3: NA handling
@@ -123,6 +130,6 @@ x_comb = imputer.transform(x_comb_df)
 x_comb_df = pd.DataFrame(x_comb,columns=col_list)
 #print(x_comb_df)
 
-x_train_df = x_comb_df[x_comb_df['label']==1]
-x_test_df = x_comb_df[x_comb_df['label']==2]
-x_pred_df = x_comb_df[x_comb_df['label']==3]
+x_train_df = x_comb_df[x_comb_df['dataset']==1]
+x_test_df = x_comb_df[x_comb_df['dataset']==2]
+x_pred_df = x_comb_df[x_comb_df['dataset']==3]
