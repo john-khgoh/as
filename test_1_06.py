@@ -6,10 +6,9 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from sklearn.impute import KNNImputer
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.ensemble import RandomForestRegressor
+#from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 from xgboost import XGBRegressor
-import lightgbm as lgb
 
 #Variations: (1) Model (sklearn, xgboost, keras) (2a) NA handling technique (mode, kNN)  (2b) No. of k neighbors for kNN imputer (3) Hyperparameter tuning (4) Cross validation
 
@@ -48,9 +47,9 @@ online_pininfo_df = pd.read_csv(online_pininfo_file) #test
 
 ##Section 2: Data exploration
 #Getting the dataframe dimensions
-print(x_train_df.shape)
-print(x_test_df.shape)
-print(x_pred_df.shape)
+#print(x_train_df.shape)
+#print(x_test_df.shape)
+#print(x_pred_df.shape)
 
 #Description of the data distribution for x_train and x_test
 #print(x_train_df.describe())
@@ -63,12 +62,13 @@ len_x_pred_df = len(x_pred_df)
 
 dataset_label_df = pd.DataFrame(['1'] * len_x_train_df + ['2'] * len_x_test_df + ['3'] * len_x_pred_df,columns=['dataset']) #Labels: 1:Train, 2:Test, 3:Pred
 
-#Combining all the X-values from x_train, x_test and x_pred to visualize the distribution
+#Combining all the X-values from x_train, x_test and x_pred to visualize the combined distribution
 x_comb_df = pd.concat([x_train_df,x_test_df,x_pred_df],axis=0)
 x_comb_df = x_comb_df.reset_index(drop=True) #The index of the original dataframes are dropped to merge with the dataset_label_df
 x_comb_df = pd.concat([x_comb_df,dataset_label_df],axis=1)
 #print(x_comb_df)
 
+#Combining all the 
 onoff_pin_label_df = pd.DataFrame(['Off'] * len(offline_pininfo_df) + ['On'] * len(online_pininfo_df),columns=['status'])
 comb_pininfo_df = pd.concat([offline_pininfo_df,online_pininfo_df],axis=0)
 comb_pininfo_df = comb_pininfo_df.reset_index(drop=True)
@@ -196,4 +196,3 @@ yhat_pred_df.to_csv(output_file,index=False)
 #What next:
 #Write the report
 #Use optuna to select the hyperparameters
-#Use k-fold cross validation to select the model (optional)
